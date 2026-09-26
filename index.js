@@ -19,11 +19,10 @@ const {
     entersState,
     VoiceConnectionStatus
 } = require('@discordjs/voice');
-const ytdl = require('@distube/ytdl-core');
-const yts = require('yt-search');
+const play = require('play-dl');
 
 const app = express();
-app.get('/', (req, res) => res.send('👑 MUSIC BOT IS ONLINE 24/7!'));
+app.get('/', (req, res) => res.send('👑 FAST MUSIC BOT IS ONLINE!'));
 app.listen(process.env.PORT || 3000, () => console.log('🌐 Web Server Active!'));
 
 const client = new Client({
@@ -58,7 +57,9 @@ function createControlRow(isPaused = false, loopMode = 0) {
     );
 }
 
-// PHÁT NHẠC VÀ BẢO BỎ KẾT NỐI VOICE AN TOÀN
+// ==========================================
+// 🎧 PHÁT NHẠC TỐC ĐỘ CAO
+// ==========================================
 async function playNextSong(guildId, textChannel) {
     const queue = queues.get(guildId);
     if (!queue || queue.songs.length === 0) {
@@ -67,7 +68,7 @@ async function playNextSong(guildId, textChannel) {
         queue.timeout = setTimeout(() => {
             if (queue.connection) queue.connection.destroy();
             queues.delete(guildId);
-            textChannel.send('✨ *Đã rời kênh Voice để tiết kiệm băng thông!*');
+            textChannel.send('✨ *Hàng chờ đã hết. Bot ngắt kết nối voice!*');
         }, 120000);
         return;
     }
@@ -76,64 +77,65 @@ async function playNextSong(guildId, textChannel) {
     const song = queue.songs[0];
 
     try {
-        const stream = ytdl(song.url, {
-            filter: 'audioonly',
-            highWaterMark: 1 << 25,
-            quality: 'highestaudio'
-        });
-
-        const resource = createAudioResource(stream);
+        // Lấy stream trực tiếp siêu tốc
+        let stream = await play.stream(song.url, { discordPlayerCompatibility: true });
+        const resource = createAudioResource(stream.stream, { inputType: stream.type });
+        
         queue.player.play(resource);
         queue.playing = true;
         queue.startTime = Date.now();
 
         client.user.setActivity(`🎶 ${song.title}`, { type: 2 });
 
-        const bar = createProgressBar(0, song.seconds);
         const embed = new EmbedBuilder()
             .setColor('#7289DA')
             .setTitle('👑 ĐANG PHÁT NHẠC VVIP')
-            .setDescription(`🎵 **[${song.title}](${song.url})**\n\n\`00:00\` ${bar} \`${song.duration}\`\n\n👤 **Yêu cầu bởi:** **${song.requestedBy}** | 📚 **Hàng chờ:** \`${queue.songs.length - 1}\` bài`)
+            .setDescription(`🎵 **[${song.title}](${song.url})**\n\n⏱️ **Thời lượng:** \`${song.duration}\`\n👤 **Yêu cầu bởi:** **${song.requestedBy}**\n📚 **Còn lại trong hàng chờ:** \`${queue.songs.length - 1}\` bài`)
             .setThumbnail(song.thumbnail)
-            .setFooter({ text: '⚡ Dynamic Audio Core' });
+            .setFooter({ text: '⚡ Ultra Fast Engine' });
 
         const row = createControlRow(false, queue.loop);
         queue.nowPlayingMessage = await textChannel.send({ embeds: [embed], components: [row] });
 
     } catch (error) {
         console.error('Playback Error:', error);
-        textChannel.send(`⚠️ Lỗi tải bài **${song.title}**, đang chuyển sang bài tiếp theo...`);
+        textChannel.send(`⚠️ Lỗi khi phát **${song.title}**, đang chuyển bài kế tiếp...`);
         queue.songs.shift();
         playNextSong(guildId, textChannel);
     }
 }
 
+// ==========================================
+// 🚀 ĐĂNG KÝ SLASH COMMANDS
+// ==========================================
 const commands = [
     new SlashCommandBuilder()
         .setName('play')
-        .setDescription('Phát nhạc từ link hoặc tìm kiếm bài hát')
-        .addStringOption(opt => opt.setName('query').setDescription('Tên bài hát hoặc URL YouTube').setRequired(true)),
+        .setDescription('Phát nhạc siêu tốc từ tên bài hát hoặc link nhạc')
+        .addStringOption(opt => opt.setName('query').setDescription('Tên bài hát').setRequired(true)),
     new SlashCommandBuilder().setName('skip').setDescription('Bỏ qua bài hát hiện tại'),
-    new SlashCommandBuilder().setName('stop').setDescription('Dừng nhạc và thoát kênh Voice'),
-    new SlashCommandBuilder().setName('queue').setDescription('Xem hàng chờ nhạc'),
-    new SlashCommandBuilder().setName('loop').setDescription('Đổi chế độ Lặp nhạc'),
-    new SlashCommandBuilder().setName('shuffle').setDescription('Trộn bài hát trong hàng chờ')
+    new SlashCommandBuilder().setName('stop').setDescription('Dừng phát nhạc và rời kênh Voice'),
+    new SlashCommandBuilder().setName('queue').setDescription('Xem danh sách hàng chờ phát nhạc'),
+    new SlashCommandBuilder().setName('loop').setDescription('Chuyển đổi chế độ lặp bài'),
+    new SlashCommandBuilder().setName('shuffle').setDescription('Trộn danh sách hàng chờ')
 ].map(c => c.toJSON());
 
 client.on('ready', async () => {
     console.log(`🚀 BOT ONLINE: ${client.user.tag}`);
-    client.user.setActivity('🎵 /play để thưởng thức nhạc', { type: 2 });
+    client.user.setActivity('🎵 /play để nghe nhạc', { type: 2 });
 
     const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
     try {
         await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
         console.log('✅ Đã nạp Slash Commands thành công!');
     } catch (err) {
-        console.error('REST Commands Error:', err);
+        console.error('REST Error:', err);
     }
 });
 
-// THÊM BÀI HÁT VÀO QUEUE & PHÁT KẾT NỐI VOICE
+// ==========================================
+// 🔗 KẾT NỐI VOICE & THÊM HÀNG CHỜ
+// ==========================================
 async function addSongsToQueue(guild, member, voiceChannel, channel, songs) {
     let queue = queues.get(guild.id);
     if (!queue) {
@@ -144,12 +146,11 @@ async function addSongsToQueue(guild, member, voiceChannel, channel, songs) {
             selfDeaf: true
         });
 
-        // Đảm bảo kết nối Voice sẵn sàng
         try {
-            await entersState(connection, VoiceConnectionStatus.Ready, 20000);
+            await entersState(connection, VoiceConnectionStatus.Ready, 15000);
         } catch (e) {
             connection.destroy();
-            return channel.send('❌ Không thể kết nối tới Voice Channel! Kiểm tra lại quyền của Bot.');
+            return channel.send('❌ Không thể vào Voice Channel! Vui lòng kiểm tra quyền Kết nối của Bot.');
         }
 
         const player = createAudioPlayer();
@@ -177,34 +178,46 @@ async function addSongsToQueue(guild, member, voiceChannel, channel, songs) {
     }
 }
 
+// ==========================================
+// 🖱️ XỬ LÝ SỰ KIỆN NÚT BẤM & MENU (FIX LỖI TREO)
+// ==========================================
 client.on('interactionCreate', async (i) => {
-    // 1. CHỌN BÀI HÁT TỪ SELECT MENU
+
+    // 1. CHỌN BÀI HÁT TỪ SELECT MENU (ĐÃ FIX SỰ KIỆN DEFER UPDATE)
     if (i.isStringSelectMenu() && i.customId === 'select_song') {
-        // Phản hồi Discord lập tức để tránh lỗi "Ứng dụng không phản hồi"
-        await i.deferReply();
-        const songUrl = i.values[0];
+        // Dùng deferUpdate() để cập nhật Menu mượt mà, không bị treo "Đang suy nghĩ..."
+        await i.deferUpdate(); 
         
         if (!i.member.voice.channel) {
-            return i.editReply('🔊 Bạn cần phải vào Voice Channel trước!');
+            return i.followUp({ content: '🔊 Bạn cần vào một Voice Channel trước!', ephemeral: true });
         }
 
-        const info = await ytdl.getBasicInfo(songUrl);
-        const song = {
-            title: info.videoDetails.title,
-            url: info.videoDetails.video_url,
-            duration: new Date(info.videoDetails.lengthSeconds * 1000).toISOString().substr(14, 5),
-            seconds: parseInt(info.videoDetails.lengthSeconds),
-            thumbnail: info.videoDetails.thumbnails[0]?.url || '',
-            requestedBy: i.user.username
-        };
+        const selectedUrl = i.values[0];
+        try {
+            const searchRes = await play.search(selectedUrl, { limit: 1 });
+            if (searchRes.length > 0) {
+                const item = searchRes[0];
+                const song = {
+                    title: item.title,
+                    url: item.url,
+                    duration: item.durationRaw || 'N/A',
+                    seconds: item.durationInSec || 0,
+                    thumbnail: item.thumbnails[0]?.url || '',
+                    requestedBy: i.user.username
+                };
 
-        addSongsToQueue(i.guild, i.member, i.member.voice.channel, i.channel, [song]);
-        return i.editReply({ content: `✅ Đã chọn phát bài: **${song.title}**` });
+                addSongsToQueue(i.guild, i.member, i.member.voice.channel, i.channel, [song]);
+                return i.editReply({ content: `✅ **Đã chọn:** ${song.title}`, components: [] });
+            }
+        } catch (err) {
+            console.error(err);
+            return i.editReply({ content: '❌ Không thể phát bài hát này!', components: [] });
+        }
     }
 
-    // 2. XỬ LÝ SLASH COMMANDS
+    // 2. LỆNH SLASH COMMANDS
     if (i.isChatInputCommand()) {
-        await i.deferReply(); // Phản hồi ngay lập tức để tránh Timeout
+        await i.deferReply();
         const { commandName } = i;
         const queue = queues.get(i.guild.id);
 
@@ -215,56 +228,46 @@ client.on('interactionCreate', async (i) => {
             const query = i.options.getString('query');
 
             try {
-                if (ytdl.validateURL(query)) {
-                    const info = await ytdl.getBasicInfo(query);
-                    const song = {
-                        title: info.videoDetails.title,
-                        url: info.videoDetails.video_url,
-                        duration: new Date(info.videoDetails.lengthSeconds * 1000).toISOString().substr(14, 5),
-                        seconds: parseInt(info.videoDetails.lengthSeconds),
-                        thumbnail: info.videoDetails.thumbnails[0]?.url || '',
-                        requestedBy: i.user.username
-                    };
-                    addSongsToQueue(i.guild, i.member, voiceChannel, i.channel, [song]);
-                    return i.editReply(`🎶 Đã thêm bài hát vào hàng chờ: **${song.title}**`);
-                } else {
-                    const searchResult = await yts(query);
-                    const videos = searchResult.videos.slice(0, 5);
-
-                    if (!videos || videos.length === 0) return i.editReply('❌ Không tìm thấy bài hát nào!');
-
-                    const selectMenu = new StringSelectMenuBuilder()
-                        .setCustomId('select_song')
-                        .setPlaceholder('🎯 Chọn bài hát phát ngay...')
-                        .addOptions(videos.map((v, idx) => ({
-                            label: `${idx + 1}.${v.title.slice(0, 90)}`,
-                            description: `⏱️ ${v.timestamp} \vert{} Kênh: ${v.author.name}`,
-                            value: v.url
-                        })));
-
-                    const row = new ActionRowBuilder().addComponents(selectMenu);
-                    return i.editReply({ content: '🔍 **Chọn bài hát bên dưới:**', components: [row] });
+                // TÌM KIẾM NHANH QUA SOUNDCLOUD / YOUTUBE
+                let results = await play.search(query, { limit: 5, source: { soundcloud: 'tracks' } });
+                if (!results || results.length === 0) {
+                    results = await play.search(query, { limit: 5, source: { youtube: 'video' } });
                 }
+
+                if (!results || results.length === 0) return i.editReply('❌ Không tìm thấy kết quả nào!');
+
+                const selectMenu = new StringSelectMenuBuilder()
+                    .setCustomId('select_song')
+                    .setPlaceholder('🎯 Chọn bài hát phát ngay...')
+                    .addOptions(results.slice(0, 5).map((v, idx) => ({
+                        label: `${idx + 1}.${v.title.slice(0, 90)}`,
+                        description: `⏱️ ${v.durationRaw || 'N/A'}`,
+                        value: v.url
+                    })));
+
+                const row = new ActionRowBuilder().addComponents(selectMenu);
+                return i.editReply({ content: '🔍 **Chọn bài hát bạn muốn nghe:**', components: [row] });
+
             } catch (err) {
                 console.error(err);
-                return i.editReply('❌ Đã xảy ra lỗi khi tìm kiếm bài hát!');
+                return i.editReply('❌ Có lỗi xảy ra khi tìm kiếm!');
             }
         }
 
         if (commandName === 'skip') {
-            if (!queue) return i.editReply('❌ Hàng chờ hiện đang trống!');
+            if (!queue) return i.editReply('❌ Hàng chờ đang trống!');
             queue.player.stop();
-            return i.editReply('⏭️ Đã skip bài!');
+            return i.editReply('⏭️ Đã skip bài hát!');
         }
 
         if (commandName === 'stop') {
-            if (!queue) return i.editReply('❌ Bot không ở trong Voice!');
+            if (!queue) return i.editReply('❌ Bot chưa ở trong kênh Voice!');
             queue.songs = [];
             queue.player.stop();
             if (queue.connection) queue.connection.destroy();
             queues.delete(i.guild.id);
             client.user.setActivity('🎵 /play để nghe nhạc', { type: 2 });
-            return i.editReply('⏹️ Đã ngắt kết nối Voice!');
+            return i.editReply('⏹️ Đã dừng nhạc và ngắt kết nối!');
         }
 
         if (commandName === 'queue') {
@@ -278,7 +281,7 @@ client.on('interactionCreate', async (i) => {
             if (!queue) return i.editReply('❌ Hàng chờ đang trống!');
             queue.loop = (queue.loop + 1) % 3;
             const modes = ['TẮT ❌', 'Lặp 1 Bài Hát 🔂', 'Lặp Cả Hàng Chờ 🔁'];
-            return i.editReply(`🔄 Đổi chế độ lặp thành: **${modes[queue.loop]}**`);
+            return i.editReply(`🔄 Chế độ lặp: **${modes[queue.loop]}**`);
         }
 
         if (commandName === 'shuffle') {
@@ -289,11 +292,11 @@ client.on('interactionCreate', async (i) => {
                 [queue.songs[idx], queue.songs[j]] = [queue.songs[j], queue.songs[idx]];
             }
             queue.songs.unshift(now);
-            return i.editReply('🔀 Đã xáo trộn danh sách bài hát!');
+            return i.editReply('🔀 Đã trộn danh sách bài hát!');
         }
     }
 
-    // 3. XỬ LÝ NÚT BẤM (BUTTONS)
+    // 3. XỬ LÝ NÚT BẤM TƯƠNG TÁC
     if (i.isButton()) {
         const queue = queues.get(i.guild.id);
         if (!queue) return i.reply({ content: '❌ Nhạc đã dừng!', ephemeral: true });
@@ -331,7 +334,7 @@ client.on('interactionCreate', async (i) => {
             if (queue.connection) queue.connection.destroy();
             queues.delete(i.guild.id);
             client.user.setActivity('🎵 /play để nghe nhạc', { type: 2 });
-            return i.reply({ content: '⏹️ Đã dừng phát nhạc!', ephemeral: true });
+            return i.reply({ content: '⏹️ Đã dừng nhạc!', ephemeral: true });
         }
     }
 });
