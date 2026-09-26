@@ -1,7 +1,7 @@
 {
-  "name": "pure-music-bot",
-  "version": "1.0.0",
-  "description": "Pure Fast Music Bot",
+  "name": "god-tier-music-bot",
+  "version": "4.0.0",
+  "description": "Ultimate Stable Music Bot",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
@@ -9,11 +9,11 @@
   "dependencies": {
     "@discordjs/opus": "^0.9.0",
     "@discordjs/voice": "^0.16.1",
+    "@distube/ytdl-core": "^4.13.5",
     "discord.js": "^14.14.1",
     "express": "^4.18.2",
     "ffmpeg-static": "^5.2.0",
     "libsodium-wrappers": "^0.7.13",
-    "play-dl": "^1.9.7"
+    "yt-search": "^2.10.4"
   }
 }
- 
