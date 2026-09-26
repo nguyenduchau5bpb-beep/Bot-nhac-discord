@@ -1,3 +1,4 @@
+const express = require('express');
 const { 
     Client, 
     GatewayIntentBits, 
@@ -13,6 +14,17 @@ const {
 const { Connectors } = require('shoukaku');
 const { Kazagumo, Plugins } = require('kazagumo');
 
+// -------------------------------------------------------------
+// 1. TẠO WEB SERVER ĐỂ DÙNG GÓI RENDER FREE 0đ
+// -------------------------------------------------------------
+const app = express();
+app.get('/', (req, res) => res.send('🚀 Bot Discord Nhạc xịn đang hoạt động 24/7!'));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`🌐 Web Server Keep-Alive đang chạy tại port ${PORT}`));
+
+// -------------------------------------------------------------
+// 2. KHỞI TẠO DISCORD CLIENT & LAVALINK ENGINE
+// -------------------------------------------------------------
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -21,7 +33,6 @@ const client = new Client({
     ]
 });
 
-// Nodes Lavalink mượt đét
 const Nodes = [
     { name: 'Node-1', url: 'lavalink.ptchosting.com:443', auth: 'ptchosting.com', secure: true },
     { name: 'Node-2', url: 'lava-v4.ajiehospitality.com:443', auth: 'https://discord.gg/ajiehospitality', secure: true }
@@ -37,25 +48,25 @@ const kazagumo = new Kazagumo({
 }, new Connectors.DiscordJS(client), Nodes);
 
 // -------------------------------------------------------------
-// KHAI BÁO TẤT CẢ LỆNH SLASH ( / )
+// 3. KHAI BÁO DANH SÁCH LỆNH SLASH ( / )
 // -------------------------------------------------------------
 const commands = [
-    // 🎵 Nhóm Lệnh Nhạc
+    // 🎵 Nhạc
     new SlashCommandBuilder().setName('play').setDescription('Phát nhạc từ YouTube/Spotify/SoundCloud').addStringOption(opt => opt.setName('song').setDescription('Tên bài hát hoặc Link').setRequired(true)),
     new SlashCommandBuilder().setName('skip').setDescription('Bỏ qua bài hát hiện tại'),
-    new SlashCommandBuilder().setName('stop').setDescription('Dừng nhạc và rời kênh voice'),
-    new SlashCommandBuilder().setName('pause').setDescription('Tạm dừng hoặc phát tiếp nhạc'),
+    new SlashCommandBuilder().setName('stop').setDescription('Dừng nhạc và rời phòng voice'),
+    new SlashCommandBuilder().setName('pause').setDescription('Tạm dừng hoặc tiếp tục phát nhạc'),
     new SlashCommandBuilder().setName('queue').setDescription('Xem danh sách hàng đợi phát nhạc'),
     new SlashCommandBuilder().setName('nowplaying').setDescription('Xem bài hát đang phát'),
 
-    // 👑 Nhóm Lệnh Admin & Quản Lý
+    // 👑 Admin
     new SlashCommandBuilder().setName('clear').setDescription('Xóa tin nhắn rác').addIntegerOption(opt => opt.setName('amount').setDescription('Số lượng (1-100)').setRequired(true)),
     new SlashCommandBuilder().setName('mute').setDescription('Cấm ngôn thành viên').addUserOption(opt => opt.setName('user').setDescription('Người bị cấm').setRequired(true)).addIntegerOption(opt => opt.setName('minutes').setDescription('Số phút').setRequired(true)),
     new SlashCommandBuilder().setName('unmute').setDescription('Gỡ cấm ngôn thành viên').addUserOption(opt => opt.setName('user').setDescription('Người được gỡ').setRequired(true)),
     new SlashCommandBuilder().setName('kick').setDescription('Kick thành viên ra khỏi server').addUserOption(opt => opt.setName('user').setDescription('Thành viên').setRequired(true)).addStringOption(opt => opt.setName('reason').setDescription('Lý do')),
     new SlashCommandBuilder().setName('slowmode').setDescription('Bật/Tắt chế độ chat chậm').addIntegerOption(opt => opt.setName('seconds').setDescription('Số giây giãn cách (0 để tắt)').setRequired(true)),
 
-    // 🎮 Nhóm Lệnh Tiện Ích & Giải Trí
+    // 🎮 Tiện ích & Giải trí
     new SlashCommandBuilder().setName('userinfo').setDescription('Xem thông tin chi tiết của một người').addUserOption(opt => opt.setName('target').setDescription('Chọn người dùng')),
     new SlashCommandBuilder().setName('serverinfo').setDescription('Xem thông tin server Discord này'),
     new SlashCommandBuilder().setName('avatar').setDescription('Lấy ảnh đại diện (Avatar) phóng to').addUserOption(opt => opt.setName('user').setDescription('Chọn người dùng')),
@@ -64,27 +75,27 @@ const commands = [
 ].map(command => command.toJSON());
 
 // -------------------------------------------------------------
-// ĐĂNG KÝ LỆNH SLASH VỚI DISCORD API
+// 4. ĐĂNG KÝ LỆNH SLASH KHI BOT ONLINE
 // -------------------------------------------------------------
 client.on('ready', async () => {
     console.log(`🚀 Bot Pro đã sẵn sàng: ${client.user.tag}`);
     const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
     try {
         await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
-        console.log('✅ Đã cập nhật thành công tất cả các lệnh Slash (/)!');
+        console.log('✅ Đã đăng ký thành công tất cả lệnh Slash (/)!');
     } catch (error) {
-        console.error(error);
+        console.error('Lỗi đăng ký lệnh:', error);
     }
 });
 
 // -------------------------------------------------------------
-// XỬ LÝ SỰ KIỆN KHI NGƯỜI DÙNG DÙNG LỆNH /
+// 5. XỬ LÝ LỆNH SLASH ( / )
 // -------------------------------------------------------------
 client.on('interactionCreate', async (interaction) => {
     if (interaction.isChatInputCommand()) {
         const { commandName, options, member, guild, channel } = interaction;
 
-        // 🎵 NHẠC
+        // --- NHÓM LỆNH NHẠC ---
         if (commandName === 'play') {
             const query = options.getString('song');
             if (!member.voice.channel) return interaction.reply({ content: '❌ Hãy vào Voice Channel trước!', ephemeral: true });
@@ -124,14 +135,14 @@ client.on('interactionCreate', async (interaction) => {
             const player = kazagumo.players.get(guild.id);
             if (!player) return interaction.reply({ content: '❌ Bot chưa vào Voice!', ephemeral: true });
             player.destroy();
-            interaction.reply('⏹️ Đã dừng phát nhạc và ngắt kết nối!');
+            interaction.reply('⏹️ Đã dừng phát nhạc và rời khỏi kênh!');
         }
 
         if (commandName === 'pause') {
             const player = kazagumo.players.get(guild.id);
             if (!player) return interaction.reply({ content: '❌ Không có nhạc đang phát!', ephemeral: true });
             player.pause(!player.paused);
-            interaction.reply(player.paused ? '⏸️ Đã tạm dừng phát nhạc!' : '▶️ Đã tiếp tục phát nhạc!');
+            interaction.reply(player.paused ? '⏸️ Tạm dừng phát nhạc!' : '▶️ Tiếp tục phát nhạc!');
         }
 
         if (commandName === 'queue') {
@@ -154,16 +165,16 @@ client.on('interactionCreate', async (interaction) => {
             interaction.reply({ embeds: [embed] });
         }
 
-        // 👑 ADMIN
+        // --- NHÓM LỆNH ADMIN ---
         if (commandName === 'clear') {
-            if (!member.permissions.has(PermissionsBitField.Flags.Administrator)) return interaction.reply({ content: '⛔ Bạn không phải Admin!', ephemeral: true });
+            if (!member.permissions.has(PermissionsBitField.Flags.Administrator)) return interaction.reply({ content: '⛔ Bạn không có quyền Admin!', ephemeral: true });
             const amount = options.getInteger('amount');
             await channel.bulkDelete(amount, true);
-            interaction.reply({ content: `🧹 Đã dọn sạch **${amount}** tin nhắn!`, ephemeral: true });
+            interaction.reply({ content: `🧹 Đã xóa sạch **${amount}** tin nhắn!`, ephemeral: true });
         }
 
         if (commandName === 'mute') {
-            if (!member.permissions.has(PermissionsBitField.Flags.Administrator)) return interaction.reply({ content: '⛔ Bạn không phải Admin!', ephemeral: true });
+            if (!member.permissions.has(PermissionsBitField.Flags.Administrator)) return interaction.reply({ content: '⛔ Bạn không có quyền Admin!', ephemeral: true });
             const user = options.getUser('user');
             const minutes = options.getInteger('minutes');
             const target = guild.members.cache.get(user.id);
@@ -172,7 +183,7 @@ client.on('interactionCreate', async (interaction) => {
         }
 
         if (commandName === 'unmute') {
-            if (!member.permissions.has(PermissionsBitField.Flags.Administrator)) return interaction.reply({ content: '⛔ Bạn không phải Admin!', ephemeral: true });
+            if (!member.permissions.has(PermissionsBitField.Flags.Administrator)) return interaction.reply({ content: '⛔ Bạn không có quyền Admin!', ephemeral: true });
             const user = options.getUser('user');
             const target = guild.members.cache.get(user.id);
             await target.timeout(null);
@@ -180,7 +191,7 @@ client.on('interactionCreate', async (interaction) => {
         }
 
         if (commandName === 'kick') {
-            if (!member.permissions.has(PermissionsBitField.Flags.Administrator)) return interaction.reply({ content: '⛔ Bạn không phải Admin!', ephemeral: true });
+            if (!member.permissions.has(PermissionsBitField.Flags.Administrator)) return interaction.reply({ content: '⛔ Bạn không có quyền Admin!', ephemeral: true });
             const user = options.getUser('user');
             const reason = options.getString('reason') || 'Không có lý do';
             await guild.members.kick(user.id, reason);
@@ -188,13 +199,13 @@ client.on('interactionCreate', async (interaction) => {
         }
 
         if (commandName === 'slowmode') {
-            if (!member.permissions.has(PermissionsBitField.Flags.Administrator)) return interaction.reply({ content: '⛔ Bạn không phải Admin!', ephemeral: true });
+            if (!member.permissions.has(PermissionsBitField.Flags.Administrator)) return interaction.reply({ content: '⛔ Bạn không có quyền Admin!', ephemeral: true });
             const sec = options.getInteger('seconds');
             await channel.setRateLimitPerUser(sec);
             interaction.reply(`⏳ Đã đặt thời gian giãn cách chat: **${sec}s**!`);
         }
 
-        // 🎮 TIỆN ÍCH & GIẢI TRÍ
+        // --- NHÓM LỆNH TIỆN ÍCH ---
         if (commandName === 'userinfo') {
             const user = options.getUser('target') || interaction.user;
             const targetMember = guild.members.cache.get(user.id);
@@ -204,7 +215,7 @@ client.on('interactionCreate', async (interaction) => {
                 .setThumbnail(user.displayAvatarURL())
                 .addFields(
                     { name: '🆔 ID', value: user.id, inline: true },
-                    { name: '📅 Ngày tham gia Discord', value: `<t:${Math.floor(user.createdTimestamp / 1000)}:R>`, inline: true },
+                    { name: '📅 Ngày tạo nick', value: `<t:${Math.floor(user.createdTimestamp / 1000)}:R>`, inline: true },
                     { name: '📥 Ngày vào Server', value: `<t:${Math.floor(targetMember.joinedTimestamp / 1000)}:R>`, inline: true }
                 );
             interaction.reply({ embeds: [embed] });
@@ -243,13 +254,13 @@ client.on('interactionCreate', async (interaction) => {
                 .setTitle('🤖 Trạng Thái Bot')
                 .addFields(
                     { name: '⏱️ Độ trễ (Ping)', value: `\`${client.ws.ping}ms\``, inline: true },
-                    { name: '📊 Server đang gánh', value: `\`${client.guilds.cache.size}\``, inline: true }
+                    { name: '📊 Máy chủ đang phát', value: `\`${client.guilds.cache.size}\``, inline: true }
                 );
             interaction.reply({ embeds: [embed] });
         }
     }
 
-    // XỬ LÝ NÚT BẤM NHẠC
+    // --- XỬ LÝ NÚT BẤM CỦA BẢNG ĐIỀU KHIỂN NHẠC ---
     if (interaction.isButton()) {
         const player = kazagumo.players.get(interaction.guildId);
         if (!player) return interaction.reply({ content: '❌ Không có nhạc đang phát!', ephemeral: true });
@@ -267,7 +278,9 @@ client.on('interactionCreate', async (interaction) => {
     }
 });
 
-// BẢNG ĐIỀU KHIỂN NHẠC CÓ NÚT BẤM
+// -------------------------------------------------------------
+// 6. GIAO DIỆN BẢNG ĐIỀU KHIỂN KHI BÀI HÁT BẮT ĐẦU PHÁT
+// -------------------------------------------------------------
 kazagumo.on('playerStart', (player, track) => {
     const channel = client.channels.cache.get(player.textId);
     if (!channel) return;
@@ -280,7 +293,7 @@ kazagumo.on('playerStart', (player, track) => {
 
     const embed = new EmbedBuilder()
         .setColor('#1DB954')
-        .setTitle('🎶 Đang Phát (Lavalink High Quality)')
+        .setTitle('🎶 Đang Phát (Lavalink Quality 320kbps)')
         .setDescription(`**[${track.title}](${track.uri})**`)
         .setThumbnail(track.thumbnail || '');
 
@@ -288,3 +301,4 @@ kazagumo.on('playerStart', (player, track) => {
 });
 
 client.login(process.env.TOKEN);
+ 
