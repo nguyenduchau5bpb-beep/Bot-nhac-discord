@@ -28,20 +28,26 @@ const client = new Client({
 });
 
 // ==========================================
-// 🚀 CẤU HÌNH DANH SÁCH LAVALINK NODES
+// 🚀 DANH SÁCH LAVALINK NODES ĐÃ ĐỔI MỚI (CHỐNG LỖI ENOTFOUND)
 // ==========================================
 const Nodes = [
     {
-        name: 'Node-Lavalink-1',
-        url: 'lavalink.lavalink.rocks:443',
-        auth: 'horizongaming',
+        name: 'AjieDev Node',
+        url: 'lavalink.ajiedev.my.id:443',
+        auth: 'ajiedevip',
         secure: true
     },
     {
-        name: 'Node-Lavalink-2',
-        url: 'lava.link:80',
+        name: 'NekoBoi Node',
+        url: 'lavalink.nekoboi.xyz:443',
         auth: 'youshallnotpass',
-        secure: false
+        secure: true
+    },
+    {
+        name: 'Ino Node',
+        url: 'lava.ino.icu:443',
+        auth: 'youshallnotpass',
+        secure: true
     }
 ];
 
@@ -91,7 +97,6 @@ client.on('ready', () => {
     client.user.setActivity('🎧 Nhạc VIP Lavalink | !play', { type: 2 });
 });
 
-// Helper đổi ms sang phút:giây
 function msToTime(duration) {
     const seconds = Math.floor((duration / 1000) % 60);
     const minutes = Math.floor((duration / (1000 * 60)) % 60);
@@ -198,4 +203,3 @@ client.on('interactionCreate', async (i) => {
 });
 
 client.login(process.env.TOKEN);
- 
