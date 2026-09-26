@@ -1,7 +1,7 @@
 {
   "name": "god-tier-music-bot",
-  "version": "4.0.0",
-  "description": "Ultimate Stable Music Bot",
+  "version": "5.0.0",
+  "description": "Fix Timeout & Perfect Voice Bot",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
