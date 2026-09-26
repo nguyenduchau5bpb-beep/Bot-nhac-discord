@@ -1,3 +1,6 @@
+// ⚡ Bỏ qua kiểm tra chứng chỉ SSL để sửa lỗi UNABLE_TO_GET_ISSUER_CERT_LOCALLY
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 const express = require('express');
 const { 
     Client, 
@@ -28,23 +31,23 @@ const client = new Client({
 });
 
 // ==========================================
-// 🚀 DANH SÁCH LAVALINK NODES ĐÃ ĐỔI MỚI (CHỐNG LỖI ENOTFOUND)
+// 🚀 DANH SÁCH LAVALINK NODES ỔN ĐỊNH
 // ==========================================
 const Nodes = [
     {
-        name: 'AjieDev Node',
-        url: 'lavalink.ajiedev.my.id:443',
-        auth: 'ajiedevip',
+        name: 'Lavalink Rocks',
+        url: 'lavalink.lavalink.rocks:443',
+        auth: 'horizongaming',
         secure: true
     },
     {
-        name: 'NekoBoi Node',
-        url: 'lavalink.nekoboi.xyz:443',
+        name: 'Lava Link Public',
+        url: 'lava.link:80',
         auth: 'youshallnotpass',
-        secure: true
+        secure: false
     },
     {
-        name: 'Ino Node',
+        name: 'Ino ICU Node',
         url: 'lava.ino.icu:443',
         auth: 'youshallnotpass',
         secure: true
@@ -61,7 +64,7 @@ const kazagumo = new Kazagumo({
 }, new Connectors.DiscordJS(client), Nodes);
 
 // ==========================================
-// 🎶 SỰ KIỆN PHÁT NHẠC (LAVALINK EVENTS)
+// 🎶 SỰ KIỆN PHÁT NHẠC
 // ==========================================
 kazagumo.on('playerStart', (player, track) => {
     const channel = client.channels.cache.get(player.textId);
@@ -75,7 +78,7 @@ kazagumo.on('playerStart', (player, track) => {
         .setFooter({ text: 'Âm thanh 320kbps Lossless từ Server Lavalink Dedicated' });
 
     const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('btn_pause').setLabel('⏯️ Tạm Dừng').setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId('btn_pause').setLabel('GM Tạm Dừng').setStyle(ButtonStyle.Primary),
         new ButtonBuilder().setCustomId('btn_skip').setLabel('⏭️ Skip').setStyle(ButtonStyle.Success),
         new ButtonBuilder().setCustomId('btn_stop').setLabel('⏹️ Stop').setStyle(ButtonStyle.Danger)
     );
@@ -112,7 +115,6 @@ client.on('messageCreate', async (message) => {
     const args = message.content.slice(PREFIX.length).trim().split(/ +/);
     const command = args.shift().toLowerCase();
 
-    // 1. LỆNH PLAY (!play / !p)
     if (command === 'play' || command === 'p') {
         const { channel } = message.member.voice;
         if (!channel) return message.reply('🔊 Bạn phải vào Voice Channel trước!');
@@ -149,7 +151,6 @@ client.on('messageCreate', async (message) => {
         if (!player.playing && !player.paused) player.play();
     }
 
-    // 2. LỆNH SKIP (!skip / !s)
     if (command === 'skip' || command === 's') {
         const player = kazagumo.players.get(message.guild.id);
         if (!player) return message.reply('❌ Bot không phát nhạc!');
@@ -157,7 +158,6 @@ client.on('messageCreate', async (message) => {
         return message.reply('⏭️ Đã chuyển bài!');
     }
 
-    // 3. LỆNH STOP (!stop / !leave)
     if (command === 'stop' || command === 'leave') {
         const player = kazagumo.players.get(message.guild.id);
         if (!player) return message.reply('❌ Bot không trong voice!');
@@ -165,7 +165,6 @@ client.on('messageCreate', async (message) => {
         return message.reply('⏹️ Đã dừng phát nhạc và rời kênh!');
     }
 
-    // 4. LỆNH QUEUE (!queue / !q)
     if (command === 'queue' || command === 'q') {
         const player = kazagumo.players.get(message.guild.id);
         if (!player || !player.queue.length) return message.reply('📑 Hàng chờ trống!');
@@ -181,7 +180,7 @@ client.on('messageCreate', async (message) => {
 });
 
 // ==========================================
-// 🖱️ NÚT BẤM ĐIỀU KHIỂN (INTERACTION)
+// 🖱️ NÚT BẤM ĐIỀU KHIỂN
 // ==========================================
 client.on('interactionCreate', async (i) => {
     if (!i.isButton()) return;
@@ -190,7 +189,7 @@ client.on('interactionCreate', async (i) => {
 
     if (i.customId === 'btn_pause') {
         player.pause(!player.paused);
-        return i.reply({ content: player.paused ? '⏸️ Tạm dừng!' : '▶️ Tiếp tục!', ephemeral: true });
+        return i.reply({ content: player.paused ? 'GM Tạm dừng!' : '▶️ Tiếp tục!', ephemeral: true });
     }
     if (i.customId === 'btn_skip') {
         player.skip();
