@@ -14,13 +14,17 @@ const {
 const { Connectors } = require('shoukaku');
 const { Kazagumo, Plugins } = require('kazagumo');
 
-// 1. WEB SERVER KEEP-ALIVE 24/7 (RENDER FREE)
+// =============================================================
+// 1. WEB SERVER KEEP-ALIVE 24/7 (CHO RENDER GÓI FREE $0)
+// =============================================================
 const app = express();
-app.get('/', (req, res) => res.send('🚀 Bot Discord Nhạc & Quản Lý Admin đang hoạt động 24/7!'));
+app.get('/', (req, res) => res.send('🚀 Bot Ultimate đang hoạt động 24/7!'));
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🌐 Web Server Keep-Alive đang chạy tại port ${PORT}`));
 
-// 2. DISCORD CLIENT & LAVALINK ENGINE
+// =============================================================
+// 2. CẤU HÌNH DISCORD CLIENT & NODES LAVALINK V4 CHUẨN
+// =============================================================
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -29,10 +33,11 @@ const client = new Client({
     ]
 });
 
+// Danh sách Node Lavalink v4 public sống khỏe & ổn định
 const Nodes = [
-    { name: 'Node-Lava', url: 'lava-v4.ajiehospitality.com:443', auth: 'https://discord.gg/ajiehospitality', secure: true },
-    { name: 'Node-Yuji', url: 'lavalink.yujibot.tasks.gq:443', auth: 'yuji', secure: true },
-    { name: 'Node-Serenetia', url: 'lava.serenetia.com:443', auth: 'youshallnotpass', secure: true }
+    { name: 'Node-HeavenCloud', url: 'free-lava.heavencloud.in:4000', auth: 'heavencloud.in', secure: false },
+    { name: 'Node-LewdHutao', url: 'node.lewdhutao.my.eu.org:80', auth: 'youshallnotpass', secure: false },
+    { name: 'Node-Jirayu', url: 'lavalink.jirayu.net:13592', auth: 'youshallnotpass', secure: false }
 ];
 
 const kazagumo = new Kazagumo({
@@ -44,58 +49,66 @@ const kazagumo = new Kazagumo({
     plugins: [new Plugins.PlayerMoved(client)]
 }, new Connectors.DiscordJS(client), Nodes);
 
-// 3. CHỐNG CRASH BOT
-kazagumo.shoukaku.on('error', (name, error) => console.error(`⚠️ Node ${name} lỗi:`, error));
-kazagumo.on('playerError', (player, error) => console.error('⚠️ Player lỗi:', error));
-process.on('unhandledRejection', (error) => console.error('⚠️ Lỗi hệ thống:', error));
+// =============================================================
+// 3. CHỐNG CRASH BOT KHI NODE BỊ LỖI
+// =============================================================
+kazagumo.shoukaku.on('error', (name, error) => console.error(`⚠️ Node ${name} gặp sự cố:`, error));
+kazagumo.on('playerError', (player, error) => console.error('⚠️ Player gặp lỗi:', error));
+process.on('unhandledRejection', (error) => console.error('⚠️ Lỗi hệ thống ngầm:', error));
 
-// 4. KHAI BÁO DANH SÁCH LỆNH SLASH ( / ) ĐẦY ĐỦ
+// =============================================================
+// 4. BỘ LỆNH SLASH ( / ) ĐẦY ĐỦ 100%
+// =============================================================
 const commands = [
-    // 🎵 Nhóm Lệnh Nhạc
-    new SlashCommandBuilder().setName('play').setDescription('Phát nhạc từ YouTube/Spotify/SoundCloud').addStringOption(opt => opt.setName('song').setDescription('Tên bài hát hoặc Link').setRequired(true)),
+    // 🎵 Nhóm Nhạc
+    new SlashCommandBuilder().setName('play').setDescription('Phát nhạc từ YouTube, Spotify (Tên/Link)').addStringOption(opt => opt.setName('song').setDescription('Tên bài hát hoặc Link').setRequired(true)),
     new SlashCommandBuilder().setName('skip').setDescription('Bỏ qua bài hát hiện tại'),
     new SlashCommandBuilder().setName('stop').setDescription('Dừng nhạc và rời phòng voice'),
     new SlashCommandBuilder().setName('pause').setDescription('Tạm dừng hoặc tiếp tục phát nhạc'),
     new SlashCommandBuilder().setName('queue').setDescription('Xem danh sách hàng đợi phát nhạc'),
     new SlashCommandBuilder().setName('nowplaying').setDescription('Xem bài hát đang phát'),
 
-    // 👑 Nhóm Lệnh Admin & Quản Lý Server (Siêu Nâng Cấp)
+    // 👑 Nhóm Admin & Quản Lý
     new SlashCommandBuilder().setName('clear').setDescription('Xóa hàng loạt tin nhắn').addIntegerOption(opt => opt.setName('amount').setDescription('Số lượng (1-100)').setRequired(true)),
-    new SlashCommandBuilder().setName('kick').setDescription('Kick thành viên ra khỏi server').addUserOption(opt => opt.setName('user').setDescription('Thành viên').setRequired(true)).addStringOption(opt => opt.setName('reason').setDescription('Lý do')),
-    new SlashCommandBuilder().setName('ban').setDescription('Cấm vĩnh viễn (Ban) thành viên khỏi server').addUserOption(opt => opt.setName('user').setDescription('Thành viên').setRequired(true)).addStringOption(opt => opt.setName('reason').setDescription('Lý do')),
-    new SlashCommandBuilder().setName('unban').setDescription('Bỏ cấm (Unban) người dùng').addStringOption(opt => opt.setName('userid').setDescription('ID của người dùng').setRequired(true)),
-    new SlashCommandBuilder().setName('mute').setDescription('Cấm ngôn (Timeout) thành viên').addUserOption(opt => opt.setName('user').setDescription('Người bị cấm').setRequired(true)).addIntegerOption(opt => opt.setName('minutes').setDescription('Số phút').setRequired(true)),
-    new SlashCommandBuilder().setName('unmute').setDescription('Gỡ cấm ngôn thành viên').addUserOption(opt => opt.setName('user').setDescription('Người được gỡ').setRequired(true)),
-    new SlashCommandBuilder().setName('lock').setDescription('Khóa chặt kênh chat hiện tại'),
+    new SlashCommandBuilder().setName('kick').setDescription('Kick thành viên khỏi server').addUserOption(opt => opt.setName('user').setDescription('Thành viên').setRequired(true)).addStringOption(opt => opt.setName('reason').setDescription('Lý do')),
+    new SlashCommandBuilder().setName('ban').setDescription('Cấm vĩnh viễn thành viên').addUserOption(opt => opt.setName('user').setDescription('Thành viên').setRequired(true)).addStringOption(opt => opt.setName('reason').setDescription('Lý do')),
+    new SlashCommandBuilder().setName('unban').setDescription('Gỡ cấm bằng ID').addStringOption(opt => opt.setName('userid').setDescription('ID người dùng').setRequired(true)),
+    new SlashCommandBuilder().setName('mute').setDescription('Cấm ngôn (Timeout)').addUserOption(opt => opt.setName('user').setDescription('Thành viên').setRequired(true)).addIntegerOption(opt => opt.setName('minutes').setDescription('Số phút').setRequired(true)),
+    new SlashCommandBuilder().setName('unmute').setDescription('Gỡ cấm ngôn').addUserOption(opt => opt.setName('user').setDescription('Thành viên').setRequired(true)),
+    new SlashCommandBuilder().setName('lock').setDescription('Khóa kênh chat hiện tại'),
     new SlashCommandBuilder().setName('unlock').setDescription('Mở khóa kênh chat hiện tại'),
-    new SlashCommandBuilder().setName('slowmode').setDescription('Đặt thời gian giãn cách gửi tin nhắn').addIntegerOption(opt => opt.setName('seconds').setDescription('Số giây (0 để tắt)').setRequired(true)),
-    new SlashCommandBuilder().setName('addrole').setDescription('Trao Chức vụ (Role) cho người dùng').addUserOption(opt => opt.setName('user').setDescription('Thành viên').setRequired(true)).addRoleOption(opt => opt.setName('role').setDescription('Chức vụ').setRequired(true)),
-    new SlashCommandBuilder().setName('removerole').setDescription('Tước Chức vụ (Role) của người dùng').addUserOption(opt => opt.setName('user').setDescription('Thành viên').setRequired(true)).addRoleOption(opt => opt.setName('role').setDescription('Chức vụ').setRequired(true)),
-    new SlashCommandBuilder().setName('warn').setDescription('Cảnh cáo thành viên vi phạm').addUserOption(opt => opt.setName('user').setDescription('Thành viên').setRequired(true)).addStringOption(opt => opt.setName('reason').setDescription('Lý do cảnh cáo').setRequired(true)),
-    new SlashCommandBuilder().setName('announce').setDescription('Gửi thông báo đẹp mắt vào kênh').addChannelOption(opt => opt.setName('channel').setDescription('Kênh gửi').setRequired(true)).addStringOption(opt => opt.setName('title').setDescription('Tiêu đề').setRequired(true)).addStringOption(opt => opt.setName('content').setDescription('Nội dung').setRequired(true)),
-    new SlashCommandBuilder().setName('poll').setDescription('Tạo bình chọn/thăm dò ý kiến').addStringOption(opt => opt.setName('question').setDescription('Câu hỏi bình chọn').setRequired(true)),
+    new SlashCommandBuilder().setName('slowmode').setDescription('Đặt thời gian giãn cách chat').addIntegerOption(opt => opt.setName('seconds').setDescription('Số giây (0 để tắt)').setRequired(true)),
+    new SlashCommandBuilder().setName('addrole').setDescription('Cấp Chức vụ (Role)').addUserOption(opt => opt.setName('user').setDescription('Thành viên').setRequired(true)).addRoleOption(opt => opt.setName('role').setDescription('Chức vụ').setRequired(true)),
+    new SlashCommandBuilder().setName('removerole').setDescription('Thu hồi Chức vụ (Role)').addUserOption(opt => opt.setName('user').setDescription('Thành viên').setRequired(true)).addRoleOption(opt => opt.setName('role').setDescription('Chức vụ').setRequired(true)),
+    new SlashCommandBuilder().setName('warn').setDescription('Cảnh cáo thành viên').addUserOption(opt => opt.setName('user').setDescription('Thành viên').setRequired(true)).addStringOption(opt => opt.setName('reason').setDescription('Lý do').setRequired(true)),
+    new SlashCommandBuilder().setName('announce').setDescription('Gửi thông báo đẹp vào kênh').addChannelOption(opt => opt.setName('channel').setDescription('Kênh gửi').setRequired(true)).addStringOption(opt => opt.setName('title').setDescription('Tiêu đề').setRequired(true)).addStringOption(opt => opt.setName('content').setDescription('Nội dung').setRequired(true)),
+    new SlashCommandBuilder().setName('poll').setDescription('Tạo bình chọn').addStringOption(opt => opt.setName('question').setDescription('Câu hỏi').setRequired(true)),
 
-    // 🎮 Nhóm Lệnh Tiện Ích & Thông Tin
-    new SlashCommandBuilder().setName('userinfo').setDescription('Xem thông tin chi tiết người dùng').addUserOption(opt => opt.setName('target').setDescription('Chọn người dùng')),
-    new SlashCommandBuilder().setName('serverinfo').setDescription('Xem thông tin chi tiết server'),
-    new SlashCommandBuilder().setName('avatar').setDescription('Xem và tải ảnh đại diện phóng to').addUserOption(opt => opt.setName('user').setDescription('Chọn người dùng')),
-    new SlashCommandBuilder().setName('dice').setDescription('Lắc xí ngầu may mắn (1-6)'),
-    new SlashCommandBuilder().setName('botinfo').setDescription('Xem thông số kỹ thuật của Bot')
+    // 🎮 Nhóm Tiện Ích
+    new SlashCommandBuilder().setName('userinfo').setDescription('Xem thông tin người dùng').addUserOption(opt => opt.setName('target').setDescription('Chọn người dùng')),
+    new SlashCommandBuilder().setName('serverinfo').setDescription('Xem thông tin Server'),
+    new SlashCommandBuilder().setName('avatar').setDescription('Xem Avatar phóng to').addUserOption(opt => opt.setName('user').setDescription('Chọn người dùng')),
+    new SlashCommandBuilder().setName('dice').setDescription('Lắc xí ngầu (1-6)'),
+    new SlashCommandBuilder().setName('botinfo').setDescription('Xem thông số kỹ thuật Bot')
 ].map(command => command.toJSON());
 
-// 5. ĐĂNG KÝ LỆNH
+// =============================================================
+// 5. ĐĂNG KÝ LỆNH KHI BOT READY
+// =============================================================
 client.on('ready', async () => {
-    console.log(`🚀 Bot đã sẵn sàng với FULL bộ lệnh: ${client.user.tag}`);
+    console.log(`🚀 Bot Ultimate đã sẵn sàng: ${client.user.tag}`);
     const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
     try {
         await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
-        console.log('✅ Cập nhật thành công toàn bộ lệnh Slash (/)!');
+        console.log('✅ Đã cập nhật thành công toàn bộ lệnh Slash (/)!');
     } catch (error) {
         console.error('Lỗi đăng ký lệnh:', error);
     }
 });
 
-// 6. XỬ LÝ LỆNH TƯƠNG TÁC
+// =============================================================
+// 6. XỬ LÝ LỆNH INTERACTION
+// =============================================================
 client.on('interactionCreate', async (interaction) => {
     if (interaction.isChatInputCommand()) {
         const { commandName, options, member, guild, channel } = interaction;
@@ -103,7 +116,7 @@ client.on('interactionCreate', async (interaction) => {
         // --- 🎵 NHÓM LỆNH NHẠC ---
         if (commandName === 'play') {
             const query = options.getString('song');
-            if (!member.voice.channel) return interaction.reply({ content: '❌ Bạn phải vào kênh Voice trước!', ephemeral: true });
+            if (!member.voice.channel) return interaction.reply({ content: '❌ Bạn phải vào phòng Voice trước!', ephemeral: true });
 
             await interaction.deferReply();
             let player = kazagumo.players.get(guild.id);
@@ -124,30 +137,30 @@ client.on('interactionCreate', async (interaction) => {
                 interaction.editReply(`🎶 Đã thêm Playlist **${result.playlistName}** (${result.tracks.length} bài)!`);
             } else {
                 player.queue.add(result.tracks[0]);
-                interaction.editReply(`➕ Đã thêm: **${result.tracks[0].title}**`);
+                interaction.editReply(`➕ Đã thêm vào hàng đợi: **${result.tracks[0].title}**`);
             }
             if (!player.playing && !player.paused) player.play();
         }
 
         if (commandName === 'skip') {
             const player = kazagumo.players.get(guild.id);
-            if (!player) return interaction.reply({ content: '❌ Bot chưa vào Voice!', ephemeral: true });
+            if (!player) return interaction.reply({ content: '❌ Bot chưa kết nối Voice!', ephemeral: true });
             player.skip();
             interaction.reply('⏭️ Đã chuyển sang bài tiếp theo!');
         }
 
         if (commandName === 'stop') {
             const player = kazagumo.players.get(guild.id);
-            if (!player) return interaction.reply({ content: '❌ Bot chưa vào Voice!', ephemeral: true });
+            if (!player) return interaction.reply({ content: '❌ Bot chưa kết nối Voice!', ephemeral: true });
             player.destroy();
-            interaction.reply('⏹️ Đã dừng phát nhạc và rời kênh!');
+            interaction.reply('⏹️ Đã dừng phát nhạc và rời khỏi kênh!');
         }
 
         if (commandName === 'pause') {
             const player = kazagumo.players.get(guild.id);
             if (!player) return interaction.reply({ content: '❌ Không có nhạc đang phát!', ephemeral: true });
             player.pause(!player.paused);
-            interaction.reply(player.paused ? '⏸️ Đã tạm dừng!' : '▶️ Đã tiếp tục phát!');
+            interaction.reply(player.paused ? '⏸️ Tạm dừng phát nhạc!' : '▶️ Tiếp tục phát nhạc!');
         }
 
         if (commandName === 'queue') {
@@ -170,7 +183,7 @@ client.on('interactionCreate', async (interaction) => {
             interaction.reply({ embeds: [embed] });
         }
 
-        // --- 👑 NHÓM LỆNH ADMIN NÂNG CAO ---
+        // --- 👑 NHÓM LỆNH ADMIN ---
         if (commandName === 'clear') {
             if (!member.permissions.has(PermissionsBitField.Flags.ManageMessages)) return interaction.reply({ content: '⛔ Bạn thiếu quyền Manage Messages!', ephemeral: true });
             const amount = options.getInteger('amount');
@@ -191,7 +204,7 @@ client.on('interactionCreate', async (interaction) => {
             const user = options.getUser('user');
             const reason = options.getString('reason') || 'Không có lý do';
             await guild.members.ban(user.id, { reason });
-            interaction.reply(`🔨 Đã cấm vĩnh viễn (Ban) **${user.tag}**! Lý do: ${reason}`);
+            interaction.reply(`🔨 Đã cấm vĩnh viễn **${user.tag}**! Lý do: ${reason}`);
         }
 
         if (commandName === 'unban') {
@@ -199,9 +212,9 @@ client.on('interactionCreate', async (interaction) => {
             const userId = options.getString('userid');
             try {
                 await guild.members.unban(userId);
-                interaction.reply(`🔓 Đã bỏ cấm (Unban) người dùng có ID: **${userId}**`);
+                interaction.reply(`🔓 Đã bỏ cấm ID: **${userId}**`);
             } catch (e) {
-                interaction.reply({ content: '❌ Không tìm thấy người dùng này trong danh sách bị Ban!', ephemeral: true });
+                interaction.reply({ content: '❌ Không tìm thấy ID này trong danh sách Banned!', ephemeral: true });
             }
         }
 
@@ -225,20 +238,20 @@ client.on('interactionCreate', async (interaction) => {
         if (commandName === 'lock') {
             if (!member.permissions.has(PermissionsBitField.Flags.ManageChannels)) return interaction.reply({ content: '⛔ Bạn thiếu quyền Manage Channels!', ephemeral: true });
             await channel.permissionOverwrites.edit(guild.roles.everyone, { SendMessages: false });
-            interaction.reply('🔒 Đã khóa kênh chat này!');
+            interaction.reply('🔒 Đã khóa kênh chat!');
         }
 
         if (commandName === 'unlock') {
             if (!member.permissions.has(PermissionsBitField.Flags.ManageChannels)) return interaction.reply({ content: '⛔ Bạn thiếu quyền Manage Channels!', ephemeral: true });
             await channel.permissionOverwrites.edit(guild.roles.everyone, { SendMessages: true });
-            interaction.reply('🔓 Đã mở khóa kênh chat này!');
+            interaction.reply('🔓 Đã mở khóa kênh chat!');
         }
 
         if (commandName === 'slowmode') {
             if (!member.permissions.has(PermissionsBitField.Flags.ManageChannels)) return interaction.reply({ content: '⛔ Bạn thiếu quyền Manage Channels!', ephemeral: true });
             const sec = options.getInteger('seconds');
             await channel.setRateLimitPerUser(sec);
-            interaction.reply(`⏳ Đặt thời gian giãn cách chat: **${sec}s**!`);
+            interaction.reply(`⏳ Đã đặt thời gian giãn cách chat: **${sec}s**!`);
         }
 
         if (commandName === 'addrole') {
@@ -247,7 +260,7 @@ client.on('interactionCreate', async (interaction) => {
             const role = options.getRole('role');
             const target = guild.members.cache.get(user.id);
             await target.roles.add(role);
-            interaction.reply(`✅ Đã cấp chức vụ **${role.name}** cho **${user.tag}**!`);
+            interaction.reply(`✅ Đã cấp Chức vụ **${role.name}** cho **${user.tag}**!`);
         }
 
         if (commandName === 'removerole') {
@@ -256,7 +269,7 @@ client.on('interactionCreate', async (interaction) => {
             const role = options.getRole('role');
             const target = guild.members.cache.get(user.id);
             await target.roles.remove(role);
-            interaction.reply(`🗑️ Đã thu hồi chức vụ **${role.name}** từ **${user.tag}**!`);
+            interaction.reply(`🗑️ Đã thu hồi Chức vụ **${role.name}** từ **${user.tag}**!`);
         }
 
         if (commandName === 'warn') {
@@ -284,7 +297,7 @@ client.on('interactionCreate', async (interaction) => {
                 .setTimestamp();
 
             await targetChannel.send({ embeds: [embed] });
-            interaction.reply({ content: `✅ Đã gửi thông báo tới kênh ${targetChannel}!`, ephemeral: true });
+            interaction.reply({ content: `✅ Đã gửi thông báo đến kênh ${targetChannel}!`, ephemeral: true });
         }
 
         if (commandName === 'poll') {
@@ -310,8 +323,8 @@ client.on('interactionCreate', async (interaction) => {
                 .setThumbnail(user.displayAvatarURL())
                 .addFields(
                     { name: '🆔 ID', value: user.id, inline: true },
-                    { name: '📅 Tạo tài khoản', value: `<t:${Math.floor(user.createdTimestamp / 1000)}:R>`, inline: true },
-                    { name: '📥 Vào Server', value: `<t:${Math.floor(targetMember.joinedTimestamp / 1000)}:R>`, inline: true }
+                    { name: '📅 Ngày tạo nick', value: `<t:${Math.floor(user.createdTimestamp / 1000)}:R>`, inline: true },
+                    { name: '📥 Ngày vào Server', value: `<t:${Math.floor(targetMember.joinedTimestamp / 1000)}:R>`, inline: true }
                 );
             interaction.reply({ embeds: [embed] });
         }
@@ -349,13 +362,13 @@ client.on('interactionCreate', async (interaction) => {
                 .setTitle('🤖 Trạng Thái Bot')
                 .addFields(
                     { name: '⏱️ Độ trễ (Ping)', value: `\`${client.ws.ping}ms\``, inline: true },
-                    { name: '📊 Máy chủ đang gánh', value: `\`${client.guilds.cache.size}\``, inline: true }
+                    { name: '📊 Máy chủ hoạt động', value: `\`${client.guilds.cache.size}\``, inline: true }
                 );
             interaction.reply({ embeds: [embed] });
         }
     }
 
-    // NÚT BẤM ĐIỀU KHIỂN NHẠC
+    // --- XỬ LÝ BẤM NÚT ĐIỀU KHIỂN NHẠC ---
     if (interaction.isButton()) {
         const player = kazagumo.players.get(interaction.guildId);
         if (!player) return interaction.reply({ content: '❌ Không có nhạc đang phát!', ephemeral: true });
@@ -373,7 +386,9 @@ client.on('interactionCreate', async (interaction) => {
     }
 });
 
-// BẢNG BÀI HÁT ĐANG PHÁT
+// =============================================================
+// 7. HIỂN THỊ KHUNG PLAYER KÈM NÚT BẤM KHI PHÁT NHẠC
+// =============================================================
 kazagumo.on('playerStart', (player, track) => {
     const channel = client.channels.cache.get(player.textId);
     if (!channel) return;
@@ -386,7 +401,7 @@ kazagumo.on('playerStart', (player, track) => {
 
     const embed = new EmbedBuilder()
         .setColor('#1DB954')
-        .setTitle('🎶 Đang Phát (Lavalink HQ 320kbps)')
+        .setTitle('🎶 Đang Phát (Âm thanh HD 320kbps)')
         .setDescription(`**[${track.title}](${track.uri})**`)
         .setThumbnail(track.thumbnail || '');
 
@@ -394,3 +409,4 @@ kazagumo.on('playerStart', (player, track) => {
 });
 
 client.login(process.env.TOKEN);
+ 
