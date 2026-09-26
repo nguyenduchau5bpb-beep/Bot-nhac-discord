@@ -1,6 +1,6 @@
 {
-  "name": "discord-music-bot-free",
-  "version": "5.0.0",
+  "name": "discord-bot-ultimate",
+  "version": "6.0.0",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
